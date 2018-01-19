@@ -1,0 +1,32 @@
+\usepackage{listings}
+\documentclass{article}
+\begin{document}
+\section{Collecting kind of food entities (first try, before sys.any)}
+To collect food entities, the Open Food Facts database was used \cite{openfoodfacts}. Besides being freely accessible, this option was selected because of the large number of entries, 374259, the presence of generic food identifiers associated with commerical product for 59383 of the entries, and a nutritional approved health rating on a A to F scale. Moreover, besides a raw data export, the service provides an experimental JSON api for online queries. However, only 795 food item were indexed as being listed in English, and having a proper name. That's still good enough for the purposes of classifying generic food information.
+The raw database was exported as a MongoDB \cite{mongo} objectr, in bson format. After having created an empty opefooddata table, using the mongoimport command we copy the contents of this object in the new database. Then, through the mongo console, we run command
+\begin{lstlisting}
+var cursor = db.products.find( 
+    {$and: [
+      {$or: [
+           {``generic_name'' :  {$ne: "", '$exists':true}},
+           {``generic_name_en'' :  {$ne: "", '$exists':true}}
+        ]},
+      {"countries" : {$regex: ``en|UK|United States|Canada''}
+    ]}
+)
+
+var cursor = db.products.find({$and: [{$or: [{"" :  {$ne: ", '$exists':true}},{"generic_name_en": {$ne: ", '$exists':true}}]}, {"countries" : {$regex: ``en|UK|United States|Canada''}}]})
+//TODO maybe 
+while (myCursor.hasNext()) {
+   printjson(myCursor.next());
+}
+\end{lstlisting}
+
+
+\section{Classifying food}
+Once the user starts logging details about their food consumption, we will need to start analysing what they are eating to give them advice. Lacking comprehensive nutritional knowledge, we can craft several heuristics [...]
+
+A naive method to classify food is to cluster it based on its nutritional values: ideally, similar kind of foods will end up being classified in the same clusters ("high in sugar", "high in protein", "low in vitamins" etc) and manual inspection of classified data could be used to assign an intuitive category to each cluster.
+The k-means clustering is used to group points into n-dimensional space into a predetermined k clusters, by iteratively computing the cluster each point belongs to based on a distance metric, until cluster membership becomes stable. While our vector space will be 250-dimensional, the number of distinct nutritional values identified by the USDA nutritional database, it's not trivial to determine the value of k. We could force it to be the number of different food groups identified for our heuristic, but obviously any kind of food that we haven't considered would then be incorrectly classified, or if there are an abundance of datapoints in that category we might even not have one of the desired heuristic values. \cite{Napoleon, 2011} describes an algorithm to both select a value k, and to reduce the dimensionality of our data set, which allows us to reduce computation by eliminating nutrients that don't contribute significantly to classification.
+Calculated clusterings for a training set, any subsequent food the user might log will be classified based on its distance from the calculated cluster centers, whose value are the only thing we have to save to the main application from these calculations.
+We fetch training data by finding common foods through { manual crafting / openfoodfacts }. For each food we found, its list of nutritional values is fetched through the Nutritionix API, which returns a list of values of type (id, quantity), where the id corresponds to nutritional values as identified by USDA. We pass the results of this query to a custom node script, using the mljs library, which expands each food's value into a 250-dimensional vector, and perform dimensionality reduction using PCA, finds good starting cluster centers, and executes k-means clustering on the entire dataset. The cluster centers are then stored to a file, which can be read by the application for classifying new food.
