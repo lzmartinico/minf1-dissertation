@@ -1,7 +1,18 @@
 \usepackage{listings}
 \documentclass{article}
 \begin{document}
-\section{Collecting kind of food entities (first try, before sys.any)}
+\section*{Architecture}
+\subsection*{Backend selection}
+By default, the Dialogflow interface includes a small inline editor to implement some simple webhook logic. While the web interface is limiting for creating a backend of the complexity required, it's easy to export this example code to Google Cloud Functions \cite{gcfwebsite}, Google's serverless cloud function service, and their own Firebase database, storage and analytics tool. 
+
+%% Maybe move to architecture?
+The sample code consists of an Express.js \cite{expresswebsite} web server, which listens to POST requests to the /webhook route to the server, which will be sent from Dialogflow, and provides helper functions to craft the appropriate response which will trigger a reply through the chat client. The core component of the code is the action-handlers dictionary, which associates a different function to any of the Dialogflow intents. \\
+
+We started developing our webhook from this starting example in GCF, but we soon realised that a core requirement of our design, the ability to call up external APIs, was not possible under the free tier of Google Cloud. Thus, it was necessary to find a replacement. Some options that were considered were Apache OpenWhisk \cite{apacheopenwhisk}, Captain Duck Duck \cite{captainduckduck}, Amazon Web Service Lambda or Elastic Beanstalk \cite{awsproductwebsite}, Dokku \cite{dokku}, 1backend \cite{1backend}. In the end, Heroku was selected as a solution. Among the many alternative the popular Platform as a Service (PaaS) solutions offer, we took into consideration the mature tooling, the easy to use deployment infrastructure, which consist of simply pushing the code to a version controlled repository, the automatic inclusion of a free domain name, and simple (but barebone) scheduling functionality. Heroku offers both a free tier and a paid tier; for our purposes of creating a prototype, the free tier offers all required functionality; however, it would not be sufficient to power the chatbot infrastructure in a production setting, as there are limits to free users' capabilities, most notably a temporary suspension (and prolonged wake up times) after an hour of inactivity.
+\subsection*{Instagram failure}
+\section*{Dialogflow concepts}
+%%Dialogflow is smart enough to detect parameters in intent and ask a question to fill remaining parameters
+\subsection*{Collecting kind of food entities (first try, before sys.any)}
 To collect food entities, the Open Food Facts database was used \cite{openfoodfacts}. Besides being freely accessible, this option was selected because of the large number of entries, 374259, the presence of generic food identifiers associated with commerical product for 59383 of the entries, and a nutritional approved health rating on a A to F scale. Moreover, besides a raw data export, the service provides an experimental JSON api for online queries. However, only 795 food item were indexed as being listed in English, and having a proper name. That's still good enough for the purposes of classifying generic food information.
 The raw database was exported as a MongoDB \cite{mongo} objectr, in bson format. After having created an empty opefooddata table, using the mongoimport command we copy the contents of this object in the new database. Then, through the mongo console, we run command
 \begin{lstlisting}
@@ -23,10 +34,86 @@ while (myCursor.hasNext()) {
 \end{lstlisting}
 
 
-\section{Classifying food}
+\section*{Classifying food}
 Once the user starts logging details about their food consumption, we will need to start analysing what they are eating to give them advice. Lacking comprehensive nutritional knowledge, we can craft several heuristics [...]
+
+
+Coming up with classifier categories is hard: humans assign multiple categories to the same food (e.g. fruit or snack for Apples), and thinking about a certain food as belonging to a certain category will influence their beliefs in regard to its nutritional properties \cite{Hayes2011}.
+
 
 A naive method to classify food is to cluster it based on its nutritional values: ideally, similar kind of foods will end up being classified in the same clusters ("high in sugar", "high in protein", "low in vitamins" etc) and manual inspection of classified data could be used to assign an intuitive category to each cluster.
 The k-means clustering is used to group points into n-dimensional space into a predetermined k clusters, by iteratively computing the cluster each point belongs to based on a distance metric, until cluster membership becomes stable. While our vector space will be 250-dimensional, the number of distinct nutritional values identified by the USDA nutritional database, it's not trivial to determine the value of k. We could force it to be the number of different food groups identified for our heuristic, but obviously any kind of food that we haven't considered would then be incorrectly classified, or if there are an abundance of datapoints in that category we might even not have one of the desired heuristic values. \cite{Napoleon, 2011} describes an algorithm to both select a value k, and to reduce the dimensionality of our data set, which allows us to reduce computation by eliminating nutrients that don't contribute significantly to classification.
 Calculated clusterings for a training set, any subsequent food the user might log will be classified based on its distance from the calculated cluster centers, whose value are the only thing we have to save to the main application from these calculations.
 We fetch training data by finding common foods through { manual crafting / openfoodfacts }. For each food we found, its list of nutritional values is fetched through the Nutritionix API, which returns a list of values of type (id, quantity), where the id corresponds to nutritional values as identified by USDA. We pass the results of this query to a custom node script, using the mljs library, which expands each food's value into a 250-dimensional vector, and perform dimensionality reduction using PCA, finds good starting cluster centers, and executes k-means clustering on the entire dataset. The cluster centers are then stored to a file, which can be read by the application for classifying new food.
+
+
+
+However, it seems like clustering is not helpful in verifying how useful a certain food is to your nutrition \cite{Kim2015a}
+
+Alternative methods exist that are based on word embeddings in recipies https://github.com/altosaar/food2vec While this might be a good way to find if two foods are culinarily related, it does not necessarily satisfy the property of nutritional equivalence
+
+\cite{Eftimov2017} developed an automatic classifcation method for European standard food classification system FoodEx2, but its classification categories are too broad to be useful.
+
+The Australian National Nutrition Survey of 1995 \cite{NSS1995} collected information from the Australian population, including classification of food into different groups:
+Cereals and cereal-based products
+Fruit products and dishes
+Vegetables and legumes
+Milk products and dishes
+Meat, poultry and game products and dishes
+Fish and seafood products and dishes 
+Egg products and dishes 
+Snack foods, sugar and confectionery
+Other foods
+Beverages
+
+
+
+
+
+Expert system in \cite{Chen2012} define nutritional rules as: 
+Underweight
+Overweight
+Mild Obesity
+Moderate Obesity
+Severe Obesity
+Morbid Obesity
+Abdominal Obesity
+Excessive Percentage of body fat
+Significant weight loss
+Severe weight loss
+Mild PEM
+Moderate PEM
+Severe PEM
+Kwashiorkor
+Marasmus
+Excessive caloric intake
+Adequate caloric intake
+Inadequate caloric intake
+Extreme energy restriction
+Excessive carbohydrate intake
+Inadequate carbohydrate intake
+Excessive sugar intake
+Excessive total fat intake
+Inadequate total fat intake
+Excessive protein intake
+Inadequate protein intake
+Excessive dietary fiber intake
+Inadequate dietary fiber intake
+Excessive cholesterol intake
+Excessive sodium intake
+Excessive mineral intake
+Inadequate mineral intake
+Excessive Vitamin Intake
+Inadequate Vitamin Intake
+Excessive Fluid Intake
+Inadequate Fluid Intake
+PEM for HD&PD
+Inadequate caloric intake - HD&PD
+Excessive protein intake – Chronic Renal Failure
+Inadequate protein intake – HD&PD)
+Inadequate HBV protein intake – Renal Disease
+Excessive sodium intake – Renal Disease
+Excessive phosphate intake – HD&PD
+Excessive potassium intake – HD&PD
+Excessive water intake – HD
+Excessive SFA intake – hyperlipidemia
