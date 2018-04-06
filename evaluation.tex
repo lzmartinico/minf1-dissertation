@@ -13,7 +13,26 @@ else
 fi
 \end{lstlisting}
 While the combination of linting and running the program was a good tool to statically catch some errors, some bugs we encountered during development could have been avoided if we had a safer type system. It's possible to add type annotation onto Javascript code using the Typescript language \cite{typescript}; additionally, there are Dialogflow client APIs for a variety of additional programming languages besides Node. It would even be possible to use any other programming language, because the use of the client is not required (and our own implementation only took advantage of a minimal number of services it offered), and it's possible to handle fulfillment completely by just accepting the correct kind of HTTP requests and providing the correct responses in return. \\
-It's also necessary to conduct some dynamic testing to ensure the interaction of all components is successful. While the \textit{testmybot} unit test library \cite{testmybot} looked like a promising solution for establishing a routine of test-driven development, it soon was evident that the Facebook hooks for the underlying \textit{Botium} library are still not mature enough to be used in production. Therefore, rather than having a collection of sample conversations we could feed \textit{testmybot} to determine whether any new code change would break any of the responses we had been getting before, we had to resort to manually testing each new feature, by messaging the chatbot from a personal Facebook account, repeating the same script for each different functionality we had previously implemented. Most debugging information was printed to the Heroku server logs through the \textit{console.log} JavaScript function.
+It's also necessary to conduct some dynamic testing to ensure the interaction of all components is successful. The echosystem for end to end bot testing is still very primitive, with some bot platforms offering their own bespoke testing utilities, and the only cross platform library being \textit{Botium}\footnote{https://github.com/codeforequity-at/botium-core} and its unit test frontend \textit{testmybot} \footnote{https://github.com/codeforequity-at/testmybot}. These library are inspired and offer the semantics of a behaviour-driven testing framework, allowing for easily composing test cases through a simple syntax. For example, one of our unit tests was simply a file containing the script we would expect from interacting with our chatbot:
+\begin{lstlisting}
+Begin Conversation Test Case
+
+#me
+greetings
+
+#bot
+👋 Greetings! What's your name?
+
+#me
+You can call me Lorenzo
+
+#bot
+Hi Lorenzo pleasure to meet you!
+I am Healthbot. I will be your personal diet assistant
+You can tell me what you are eating and how much, or send me a picture of your food, and I will record it so we can try to understand how you eat better!
+After that, whenever you want to think back about what you have been eating, just ask me to tell you what you had on any date!
+\end{lstlisting}
+While \textit{testbot}  looked like a promising solution for establishing a routine of test-driven development, it soon was evident that the \textit{Botium} hooks for Facebook were still not mature enough to be used in production. Therefore, rather than having a collection of sample conversations we could feed \textit{testmybot} to determine whether any new code change would break any of the responses we had been getting before, we had to resort to manually testing each new feature, by messaging the chatbot from a personal Facebook account, repeating the same script for each different functionality we had previously implemented. This would show very clearly if our modifications had broken an existing behaviour. In case of errors, most debugging information was printed to the Heroku server logs through the \textit{console.log} JavaScript function.
 
 \section{User trial}
 For our evaluation, we ran an experiment giving out the chatbot to 11 university students, all within ages of 20 to 25 and at least moderately physically active, to use for a week. As a control group, another 9 university students were prescribed to use the MyFitnessPal app for the same duration. All users were recruited through Facebook chat or in person, and all were given the OK to start the evaluation on the same day after having read and signed a consent form describing the experiment and the tester's role in it. In retrospect, having a more gradual rollout might have helped with spotting the first bugs sooner, and giving us a chance to fix the underlying issues without compromising the platform for every other user. As it was, while we identified several issues and features that would have been immediately easy to add, we did not push most of the modification to avoid breaking existing users' workflows. Unfortunately Facebook does not allow to have a separate testing and production environments until the application goes through a first review process, which we couldn't afford to spend time going through.
