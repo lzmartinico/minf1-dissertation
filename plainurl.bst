@@ -1,7 +1,7 @@
 %%% Modification of BibTeX style file /opt/texlive/2017/texmf-dist/bibtex/bst/base/plain.bst
 %%% ... by urlbst, version 0.7 (marked with "% urlbst")
 %%% See <http://purl.org/nxg/dist/urlbst>
-%%% Added webpage entry type, and url and lastchecked fields.
+%%% Added webpage entry type, and url and urldate fields.
 %%% Added eprint support.
 %%% Added DOI support.
 %%% Added PUBMED support.
@@ -44,7 +44,7 @@ ENTRY
     doi % urlbst
     pubmed % urlbst
     url % urlbst
-    lastchecked % urlbst
+    urldate % urlbst
   }
   {}
   { label }
@@ -73,7 +73,7 @@ FUNCTION {init.urlbst.variables}
   % String constants, which you _might_ want to tweak.
   "URL: " 'urlintro := % prefix before URL; typically "Available from:" or "URL":
   "online" 'onlinestring := % indication that resource is online; typically "online"
-  "cited " 'citedstring := % indicator of citation date; typically "cited "
+  "accessed on " 'citedstring := % indicator of citation date; typically "cited "
   "[link]" 'linktextstring := % dummy link text; typically "[link]"
   "http://arxiv.org/abs/" 'eprinturl := % prefix to make URL from eprint ref
   "arXiv:" 'eprintprefix := % text prefix printed before eprint ref; typically "arXiv:"
@@ -225,10 +225,10 @@ FUNCTION {inbrackets}
   if$
 }
 
-FUNCTION {format.lastchecked}
-{ lastchecked empty$
+FUNCTION {format.urldate}
+{ urldate empty$
     { "" }
-    { inbrackets citedstring lastchecked * }
+    { inbrackets citedstring urldate * }
   if$
 }
 % ...urlbst to here
@@ -770,15 +770,15 @@ FUNCTION {format.pubmed}
 
 % Output a URL.  We can't use the more normal idiom (something like
 % `format.url output'), because the `inbrackets' within
-% format.lastchecked applies to everything between calls to `output',
-% so that `format.url format.lastchecked * output' ends up with both
-% the URL and the lastchecked in brackets.
+% format.urldate applies to everything between calls to `output',
+% so that `format.url format.urldate * output' ends up with both
+% the URL and the urldate in brackets.
 FUNCTION {output.url}
 { url empty$
     'skip$ 
     { new.block 
       format.url output
-      format.lastchecked output 
+      format.urldate output 
     }
   if$
 }
@@ -835,7 +835,7 @@ FUNCTION {fin.entry}
 
 % Webpage entry type.
 % Title and url fields required;
-% author, note, year, month, and lastchecked fields optional
+% author, note, year, month, and urldate fields optional
 % See references 
 %   ISO 690-2 http://www.nlc-bnc.ca/iso/tc46sc9/standard/690-2e.htm
 %   http://www.classroom.net/classroom/CitingNetResources.html
@@ -865,7 +865,7 @@ FUNCTION {webpage}
     'skip$
     { format.date "year" output.check }
   if$
-  % We don't need to output the URL details ('lastchecked' and 'url'),
+  % We don't need to output the URL details ('urldate' and 'url'),
   % because fin.entry does that for us, using output.web.refs.  The only
   % reason we would want to put them here is if we were to decide that
   % they should go in front of the rather miscellaneous information in 'note'.
