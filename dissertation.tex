@@ -1,6 +1,8 @@
 \documentclass[bsc,frontabs,twoside,singlespacing,deptreport]{infthesis}
 \usepackage{graphicx}
 \usepackage{url}
+%\usepackage{breakurl}
+%\usepackage[breaklinks]{hyperref}
 \usepackage{amsmath}
 \usepackage{xcolor}
 \usepackage{subcaption}
@@ -11,6 +13,7 @@
   postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
 }
 \graphicspath{{./figures/}}
+%\def\UrlBreaks{\do\/do-}
 \begin{document}
 
 \title{Chatting about data}
@@ -55,7 +58,6 @@ Acknowledgements go here.
 \input{discussion}
 \chapter{Conclusion}
 \input{conclusion}
-
 % use the following and \cite{} as above if you use BibTeX
 % otherwise generate bibtem entries
 % consider \nocite{*} or \style{unsrt}
