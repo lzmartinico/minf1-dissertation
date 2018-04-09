@@ -5,6 +5,7 @@
 \usepackage{xcolor}
 \usepackage{subcaption}
 \usepackage{listings}
+\usepackage{pdfpages}
 \lstset{
   breaklines=true,
   postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
@@ -57,8 +58,15 @@ Acknowledgements go here.
 
 % use the following and \cite{} as above if you use BibTeX
 % otherwise generate bibtem entries
-% consider \nocite{*}
+% consider \nocite{*} or \style{unsrt}
 \bibliographystyle{plainurl}
 \bibliography{bibliography.bib}
+\appendix
+\chapter{Feedback forms}
+\includepdf[pages=-,nup=2x2]{mfp_form.pdf}
+\includepdf[pages=-,nup=2x2]{bot_form.pdf}
+\chapter{Aggregated responses}
+\includepdf[pages=-,nup=2x2]{mfp_feedback.pdf}
+\includepdf[pages=-]{bot_feedback.pdf}
 
 \end{document}
