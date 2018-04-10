@@ -1,11 +1,11 @@
 all: dissertation
 
-dissertation: dissertation.tex bibliography.bib 
-	pdflatex dissertation && bibtex dissertation && pdflatex dissertation && bibtex dissertation && pdflatex dissertation
+dissertation: dissertation.tex
+	latexmk -pdf dissertation	
 
 
 interim: interim.tex
 	pdflatex interim.tex
 
 clean:
-	rm *dvi *log *aux
+	latexmk -CA
